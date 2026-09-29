@@ -1,0 +1,10 @@
+# pipeline outputs and inputs: gigabytes, and the comment text is regulations.gov's corpus
+site/data.json
+site/audit_blind.csv
+site/audit_key.csv
+cache/
+attachments*/
+*.jsonl
+.env
+.DS_Store
+__pycache__/

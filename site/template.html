@@ -1,0 +1,327 @@
+<meta charset="utf-8">
+<title>Endangerment Docket Explorer</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=Source+Sans+3:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --paper:#F6F7F5; --paper-2:#EDEFEC; --ink:#1E252B; --ink-2:#4A545C; --ink-3:#7A838B; --line:#D5D9D6;
+  --accent:#2B4C7E; --accent-2:#E4EAF4;
+  --oppose:#B0443C; --oppose-bg:#F6E4E2; --support:#2E7D5B; --support-bg:#E1F0E8; --neutral:#8A9099; --neutral-bg:#E9EBED;
+  --addr:#2E7D5B; --gen:#8C7A2E; --dism:#B0443C; --none:#6B7280;
+  --serif:"Source Serif 4",Georgia,"Times New Roman",serif; --sans:"Source Sans 3","Segoe UI",Helvetica,Arial,sans-serif; --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#14181C; --paper-2:#1C2126; --ink:#E6E9EC; --ink-2:#B4BBC2; --ink-3:#8A929A; --line:#2E353C;
+  --accent:#8FB0E6; --accent-2:#1F2C40; --oppose:#E0847C; --oppose-bg:#3A2321; --support:#7CC3A0; --support-bg:#1E3329; --neutral:#9AA1A8; --neutral-bg:#262B30;
+  --addr:#7CC3A0; --gen:#D2B85A; --dism:#E0847C; --none:#9AA1A8;}}
+:root[data-theme="dark"]{
+  --paper:#14181C; --paper-2:#1C2126; --ink:#E6E9EC; --ink-2:#B4BBC2; --ink-3:#8A929A; --line:#2E353C;
+  --accent:#8FB0E6; --accent-2:#1F2C40; --oppose:#E0847C; --oppose-bg:#3A2321; --support:#7CC3A0; --support-bg:#1E3329; --neutral:#9AA1A8; --neutral-bg:#262B30;
+  --addr:#7CC3A0; --gen:#D2B85A; --dism:#E0847C; --none:#9AA1A8;}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:15px/1.5 var(--sans);margin:0}
+a{color:var(--accent)}
+.wrap{max-width:1180px;margin:0 auto;padding-block:0 48px;padding-inline:20px}
+header.top{border-bottom:1px solid var(--line);padding-block:22px 0}
+header.top h1{font:600 30px/1.15 var(--serif);margin:0 0 4px;text-wrap:balance}
+header.top .sub{color:var(--ink-2);margin:0 0 14px;max-width:70ch}
+.docket{font:13px var(--mono);color:var(--ink-3)}
+nav.tabs{display:flex;gap:2px;flex-wrap:wrap;position:sticky;top:env(safe-area-inset-top,0px);background:var(--paper);border-bottom:1px solid var(--line);z-index:5}
+nav.tabs button{background:none;border:0;border-bottom:3px solid transparent;padding:10px 12px;font:500 14px var(--sans);color:var(--ink-2);cursor:pointer}
+nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+nav.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+section.page{padding-block:22px 0}
+h2{font:600 22px/1.2 var(--serif);margin:0 0 6px;text-wrap:balance}
+h3{font:600 16px/1.3 var(--sans);margin:22px 0 8px}
+p{max-width:72ch}
+.lede{color:var(--ink-2);margin:0 0 18px;max-width:78ch}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:14px 0 6px}
+.tile{background:var(--paper-2);border-radius:6px;padding:12px 14px}
+.tile .n{font:500 30px/1.05 var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.tile .l{font-size:13px;color:var(--ink-2);margin-top:4px}
+.tile.o .n{color:var(--oppose)} .tile.s .n{color:var(--support)} .tile.a .n{color:var(--accent)} .tile.g .n{color:var(--gen)}
+.eyebrow{font:600 11px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:18px 0 8px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{text-align:left;font-weight:600;font-size:12.5px;letter-spacing:.03em;text-transform:uppercase;color:var(--ink-3);border-bottom:1px solid var(--line);padding:8px 8px;white-space:nowrap}
+td{border-bottom:1px solid var(--line);padding:8px;vertical-align:top}
+td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:13px}
+.tbl{overflow-x:auto;margin-top:6px}
+.mono{font-family:var(--mono);font-size:12.5px;color:var(--ink-2)}
+.pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;line-height:1.5}
+.pill.oppose_rescission,.pill.OPPOSE{background:var(--oppose-bg);color:var(--oppose)} .pill.support_rescission,.pill.SUPPORT{background:var(--support-bg);color:var(--support)}
+.pill.mixed,.pill.unclear,.pill.off_topic,.pill.UNCLEAR,.pill.EXCLUDE,.pill.PENDING,.pill.neutral{background:var(--neutral-bg);color:var(--neutral)}
+.v{display:inline-block;width:11px;height:11px;border-radius:2px;vertical-align:-1px;margin-right:4px}
+.v.addressed_directly{background:var(--addr)} .v.addressed_generally{background:var(--gen)} .v.dismissed_out_of_scope{background:var(--dism)} .v.not_addressed{background:transparent;border:1.5px solid var(--none)}
+.v.same_argument_in_vehicle{background:var(--addr)} .v.extended_or_reframed{background:var(--gen)} .v.new_in_sprm{background:var(--dism)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--ink-2);margin:6px 0 10px}
+.bars{display:grid;grid-template-columns:max-content 1fr max-content;gap:6px 12px;align-items:center;font-size:13.5px;max-width:760px}
+.bar{height:14px;background:var(--paper-2);border-radius:2px;overflow:hidden;display:flex}
+.bar i{display:block;height:100%} .bar i.o{background:var(--oppose)} .bar i.s{background:var(--support)} .bar i.u{background:var(--neutral)}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:12px 0 8px}
+.controls input[type=search]{flex:1 1 240px;padding:7px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);font:14px var(--sans)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--paper);color:var(--ink-2);border-radius:999px;padding:3px 10px;font:500 13px var(--sans);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent-2);border-color:var(--accent);color:var(--ink)}
+.chip:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+select{padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);font:13.5px var(--sans)}
+.count{font:13px var(--mono);color:var(--ink-3)}
+.pager{display:flex;gap:8px;align-items:center;margin:10px 0;font-size:13.5px}
+.pager button{border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:6px;padding:4px 10px;cursor:pointer;font:13.5px var(--sans)}
+.pager button:disabled{opacity:.4;cursor:default}
+details{margin:2px 0} summary{cursor:pointer;color:var(--accent);font-size:13px}
+.q{color:var(--ink-2);font-style:italic}
+.who{color:var(--ink-3);font-size:12.5px}
+.note{background:var(--accent-2);border-left:3px solid var(--accent);padding:10px 14px;border-radius:0 6px 6px 0;margin:14px 0;max-width:80ch}
+.methods p,.methods li{max-width:78ch}
+.methods li{margin:4px 0}
+footer{border-top:1px solid var(--line);margin-top:36px;padding-top:12px;color:var(--ink-3);font-size:12.5px}
+.rtcnum{font-family:var(--mono);font-size:12.5px;background:var(--paper-2);padding:0 5px;border-radius:3px;white-space:nowrap}
+@media (max-width:640px){header.top h1{font-size:24px} .tile .n{font-size:24px} td,th{padding:6px 5px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <h1>An Analysis of Comments on EPA's February Endangerment Rescission</h1>
+  <p class="sub">Every comment on EPA's 2025 proposal to rescind the 2009 Greenhouse Gas Endangerment Finding, classified — and every substantive argument checked against what EPA said in response, in the vehicle rule and in the September 2026 power-plant proposal.</p>
+  <div class="docket">Docket <span id="docket"></span> · <span id="ntotal"></span> comments · built <span id="built"></span></div>
+  <p class="sub" id="deadline-note"></p>
+  <nav class="tabs" role="tablist" aria-label="Pages">
+    <button role="tab" data-page="overview" aria-selected="true">Overview</button>
+    <button role="tab" data-page="comments">Comments</button>
+    <button role="tab" data-page="campaigns">Campaigns</button>
+    <button role="tab" data-page="arguments">Arguments</button>
+    <button role="tab" data-page="shortlist">Unaddressed</button>
+    <button role="tab" data-page="themes">Endangerment arguments</button>
+    <button role="tab" data-page="sprm">Power-plant proposal</button>
+    <button role="tab" data-page="methods">Methods</button>
+  </nav>
+</header>
+
+<section class="page" id="page-overview">
+  <h2>Who commented, and what EPA did with it</h2>
+  <p class="lede">EPA's power-plant proposal describes this docket as "hundreds of thousands of comments from a variety of perspectives." The record shows that more than 98% of comments received opposed the rule.</p>
+  <div class="tiles" id="tiles"></div>
+  <div class="eyebrow">Stance by layer</div>
+  <div class="tbl"><table id="layers"></table></div>
+  <div class="eyebrow">Individually submitted comments, by type of commenter</div>
+  <div class="bars" id="entitybars"></div>
+  <div class="legend"><span><i class="v" style="background:var(--oppose)"></i>oppose rescission</span><span><i class="v" style="background:var(--support)"></i>support rescission</span><span><i class="v" style="background:var(--neutral)"></i>mixed / unclear / off-topic</span></div>
+  <div class="eyebrow">What EPA's Response to Comments did with the substantive arguments</div>
+  <p id="oos-lede"></p>
+  <div class="tbl"><table id="oos"></table></div>
+  <div class="note">The out-of-scope language used by EPA is: "the issues raised by commenters are not applicable to the arguments in the final action. The EPA considers these comments out of scope." Sections marked WHOLE contain nothing else.</div>
+</section>
+
+<section class="page" id="page-comments" hidden>
+  <h2>Individually submitted comments</h2>
+  <p class="lede">Every non-campaign entry on the docket (<span id="nc"></span>), with the stance and commenter type assigned by the classifier and the phrase that decided it. Docket ids link to regulations.gov.</p>
+  <div class="note" id="namenote"></div>
+  <div class="controls">
+    <input type="search" id="csearch" placeholder="Search submitter, type or key phrase" aria-label="Search comments">
+    <select id="cstance" aria-label="Stance"><option value="">All stances</option><option value="oppose_rescission">Oppose rescission</option><option value="support_rescission">Support rescission</option><option value="mixed">Mixed</option><option value="unclear">Unclear</option><option value="off_topic">Off-topic</option></select>
+    <select id="centity" aria-label="Commenter type"><option value="">All commenter types</option></select>
+    <select id="csub" aria-label="Substantive"><option value="">All entries</option><option value="1">Substantive only (orgs, governments, ≥5 pages)</option></select>
+    <span class="count" id="ccount"></span>
+  </div>
+  <div class="pager" id="cpager"></div>
+  <div class="tbl"><table id="ctable"><thead><tr><th>Docket id</th><th>Posted</th><th>Submitter</th><th>Type</th><th>Stance</th><th>Conf.</th><th>Key phrase</th></tr></thead><tbody></tbody></table></div>
+</section>
+
+<section class="page" id="page-campaigns" hidden>
+  <h2>Mass comment campaigns</h2>
+  <p class="lede">EPA collapsed each letter-writing campaign to one docket entry. Counts are EPA's own signature counts from Appendix A of its Response to Comments where listed, otherwise regulations.gov's duplicate count. Each row shows the sentence that decided its stance.</p>
+  <p class="note" id="campnote"></p>
+  <div class="tiles" id="camptiles"></div>
+  <div class="tbl"><table id="camptable"><thead><tr><th>Docket id</th><th>Sponsor</th><th class="num">Signatures</th><th>Stance</th><th>Decisive text</th><th>Note</th></tr></thead><tbody></tbody></table></div>
+</section>
+
+<section class="page" id="page-arguments" hidden>
+  <h2>Arguments raised, and whether EPA answered them</h2>
+  <p class="lede">The <span id="nraw"></span> distinct arguments extracted from <span id="nsub"></span> substantive comments, consolidated into <span id="ncanon"></span> canonical arguments and indexed to the section of EPA's own Response to Comments outline they belong to. Each was checked against four EPA documents.</p>
+  <div class="legend"><span><i class="v addressed_directly"></i>addressed directly</span><span><i class="v addressed_generally"></i>addressed generally</span><span><i class="v dismissed_out_of_scope"></i>dismissed as out of scope</span><span><i class="v not_addressed"></i>not addressed</span> &nbsp; columns: <b>RTC</b> vehicle Response to Comments · <b>FR</b> vehicle final rule · <b>SP</b> power-plant supplemental proposal (Sept 2026) · <b>PR</b> power-plant partial repeal. Arguments tagged vehicle-only were not checked against the two power-plant documents (dashed box). Commenters: assigned by the model in merging / after a similarity fill.</div>
+  <div class="controls">
+    <input type="search" id="asearch" placeholder="Search claims, topics, commenters" aria-label="Search arguments">
+    <select id="atopic" aria-label="RTC topic"><option value="">All RTC topics</option></select>
+    <select id="apos" aria-label="Position"><option value="">Any position</option><option value="opposes_proposal">Opposes proposal</option><option value="supports_proposal">Supports proposal</option><option value="neutral">Neutral</option><option value="mixed">Mixed</option></select>
+    <select id="aap" aria-label="Applies to"><option value="">Applies to: any</option><option value="both">Both rescissions</option><option value="vehicle_only">Vehicle only</option><option value="power_plant_only">Power plants only</option></select>
+    <select id="artc" aria-label="Vehicle RTC verdict"><option value="">RTC: any verdict</option><option value="addressed_directly">RTC: addressed directly</option><option value="addressed_generally">RTC: addressed generally</option><option value="dismissed_out_of_scope">RTC: dismissed</option><option value="not_addressed">RTC: not addressed</option></select>
+    <select id="asort" aria-label="Sort"><option value="ncm">Sort: most commenters</option><option value="tc">Sort: RTC section</option></select>
+    <span class="count" id="acount"></span>
+  </div>
+  <div class="pager" id="apager"></div>
+  <div class="tbl"><table id="atable"><thead><tr><th>RTC §</th><th>Argument</th><th class="num">Commenters</th><th>Applies</th><th>RTC</th><th>FR</th><th>SP</th><th>PR</th></tr></thead><tbody></tbody></table></div>
+</section>
+
+<section class="page" id="page-shortlist" hidden>
+  <h2>Raised on the vehicle docket, answered nowhere</h2>
+  <p class="lede">Arguments that apply to both rescissions, oppose the proposal, and were dismissed or not addressed in the vehicle Response to Comments, the vehicle final rule <em>and</em> the power-plant supplemental proposal. Rows with five or more commenters were checked by keyword search of the three documents, outside the model pipeline.</p>
+  <div class="tiles" id="sltiles"></div>
+  <div class="controls"><select id="slmin" aria-label="Minimum commenters"><option value="2">≥ 2 commenters</option><option value="5">≥ 5 commenters</option><option value="0">All</option></select><span class="count" id="slcount"></span></div>
+  <div class="tbl"><table id="sltable"><thead><tr><th>RTC §</th><th>Argument</th><th class="num">Commenters</th><th>RTC</th><th>FR</th><th>Supp. proposal</th></tr></thead><tbody></tbody></table></div>
+</section>
+
+<section class="page" id="page-themes" hidden>
+  <h2>The three endangerment arguments, and what commenters said</h2>
+  <p class="lede">The three legal arguments underlying the Endangerment rescission in the vehicle and power-plant rules are claims that changes in how the Supreme Court views the major questions doctrine and other issues render the Finding incorrect, that the 1970 Clean Air Act was not intended to address global pollutants, and that the impacts are de minimis. This tab displays each commenter's argument alongside EPA's response (and where to find that response).</p>
+  <div class="note">Locations are the RTC section and PDF page of EPA's Response to Comments (docket document 31089), and the Federal Register page of the supplemental proposal. Arguments tagged vehicle-only were not checked against the power-plant proposal (shown as n/a).</div>
+  <div class="legend"><span><i class="v addressed_directly"></i>addressed directly</span><span><i class="v addressed_generally"></i>addressed generally</span><span><i class="v dismissed_out_of_scope"></i>dismissed as out of scope</span><span><i class="v not_addressed"></i>not addressed</span> &nbsp; <b>RTC</b> vehicle Response to Comments · <b>SP</b> power-plant supplemental proposal</div>
+  <div class="controls"><select id="thpos" aria-label="Position"><option value="opposes_proposal">Arguments opposing the proposal</option><option value="supports_proposal">Arguments supporting the proposal</option><option value="">All</option></select><select id="thmin" aria-label="Minimum commenters"><option value="2">≥ 2 commenters</option><option value="5">≥ 5 commenters</option><option value="0">All</option></select></div>
+  <div id="themes"></div>
+</section>
+
+<section class="page" id="page-sprm" hidden>
+  <h2>What is new in the power-plant proposal</h2>
+  <p class="lede">EPA's own endangerment-related arguments in the September 2026 supplemental proposed rule for power plants (91 FR 2026-19072; comments due <span id="deadline"></span>), each checked against the vehicle final rule and its Response to Comments for whether EPA had already made it.</p>
+  <div class="note"><b>Terms.</b> "SPRM" = this supplemental proposed rulemaking (the September 2026 power-plant proposal). "2009 Endangerment Finding" = the §202(a) finding for motor vehicles, rescinded February 2026. "2015 Findings" = the endangerment and significant-contribution findings EPA made for fossil fuel-fired power plants in the 2015 §111(b) Carbon Pollution Standards (80 FR 64510), which this proposal would rescind. "2015 CPP" = the Clean Power Plan for existing plants under §111(d).</div>
+  <div class="tiles" id="sprmtiles"></div>
+  <p class="note" id="sprmnote"></p>
+  <div class="legend"><span><i class="v same_argument_in_vehicle"></i>same argument in vehicle rescission</span><span><i class="v extended_or_reframed"></i>extended or reframed for §111</span><span><i class="v new_in_sprm"></i>new in this proposal</span></div>
+  <div class="controls"><select id="sprmv" aria-label="Verdict"><option value="">All</option><option value="new_in_sprm">New</option><option value="extended_or_reframed">Extended / reframed</option><option value="same_argument_in_vehicle">Same as vehicle</option></select><select id="sprmt" aria-label="Type"><option value="">All types</option></select><span class="count" id="sprmcount"></span></div>
+  <div class="tbl"><table id="sprmtable"><thead><tr><th>Verdict</th><th>Section</th><th>Type</th><th>EPA's argument</th><th>What is new</th></tr></thead><tbody></tbody></table></div>
+</section>
+
+<section class="page methods" id="page-methods" hidden>
+  <h2>Methods and provenance</h2>
+  <div id="methods"></div>
+</section>
+
+<footer>Marcus C. Sarofim · <a id="repolink" href="#" target="_blank" rel="noopener">source and data</a>. Source data: regulations.gov docket EPA-HQ-OAR-2025-0194; EPA Response to Comments (docket document 31089); 91 FR 2026-03157; 91 FR 2026-19071 and 2026-19072. Classification by Claude (Anthropic) models; every headline number is auditable from the linked files.</footer>
+</div>
+
+<script id="data" type="application/json">__DATA__</script>
+<script>
+(function(){
+const D = JSON.parse(document.getElementById('data').textContent);
+const S = D.summary, $ = s => document.querySelector(s), esc = s => String(s??'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt = n => (n==null?'—':Number(n).toLocaleString('en-US'));
+const pct = (a,b) => b ? (100*a/b).toFixed(1)+'%' : '—';
+const STANCE = {oppose_rescission:'Oppose', support_rescission:'Support', mixed:'Mixed', unclear:'Unclear', off_topic:'Off-topic', OPPOSE:'Oppose', SUPPORT:'Support', UNCLEAR:'Unclear', EXCLUDE:'Duplicate', PENDING:'Pending'};
+const ENT = {individual:'Individual', elected_official:'Elected official', government:'Government', academic_or_scientist:'Academic / scientist', health_professional_or_org:'Health professional / org', ngo_or_advocacy:'NGO / advocacy', business_or_industry:'Business / industry', trade_association:'Trade association', religious_org:'Religious organization', other_org:'Other organization'};
+const VERD = {addressed_directly:'addressed directly', addressed_generally:'addressed generally', dismissed_out_of_scope:'dismissed as out of scope', not_addressed:'not addressed'};
+const NOV = {same_argument_in_vehicle:'same', extended_or_reframed:'extended', new_in_sprm:'NEW'};
+const DOCN = {vehicle_rtc:'Vehicle RTC', vehicle_fr:'Vehicle final rule', sprm_fr:'Power-plant supplemental proposal', partial_repeal:'Power-plant partial repeal'};
+const regs = id => `https://www.regulations.gov/comment/${S.docket}-${id}`;
+const DL = (S.downloads||[]).map(d => [d.file, d.label]);   // written by make_downloads.py; never hand-listed
+const pill = s => `<span class="pill ${esc(s)}">${esc(STANCE[s]||s)}</span>`;
+const cite = (a,k) => { const l = a.vl && a.vl[k]; if(!l) return ''; if(k==='vehicle_rtc') return `<span class="mono">RTC §${esc(l.s||'?')} · PDF p. ${esc(l.p)}${l.b==='summary'?' · <em>EPA summary of comments</em>':''}</span>`; return l.p?`<span class="mono">FR p. ${esc(l.p)}</span>`:''; };
+const vbox = (v,q) => `<span class="v ${esc(v)}" title="${esc(VERD[v]||v)}${q?': '+esc(q):''}"></span>`;
+const NA = '<span class="v" style="background:transparent;border:1px dashed var(--line)" title="not checked: vehicle-only argument"></span>';
+// a document's reply cell: the quoted sentence with its location; a not-addressed verdict's quote is the nearest passage, labelled as such
+const reply = (a,k) => { const q = a.vq[k]; if(!q) return '<span class="who">—</span>'; const pre = a.v[k]==='not_addressed' ? '<span class="who">nearest passage, does not answer it: </span>' : ''; return pre + esc(q) + '<br>' + cite(a,k); };
+
+$('#docket').textContent = S.docket; $('#repolink').href = S.repo; $('#ntotal').textContent = fmt(S.epa_total); $('#built').textContent = S.built; $('#deadline').textContent = S.sprm_deadline;
+// ---- overview
+const all = S.layers[2], det = all.o + all.s;
+$('#tiles').innerHTML = [
+  ['a', fmt(S.epa_total), 'comments EPA reports receiving'],
+  ['o', pct(all.o, det), 'of comments with a stance oppose rescission'],
+  ['o', fmt(S.campaign_counts.OPPOSE||0)+' of '+fmt((S.campaign_counts.OPPOSE||0)+(S.campaign_counts.SUPPORT||0)), 'organized campaigns opposed rescission'],
+  ['o', pct(S.oos_whole_args, S.raw_arguments), 'of substantive arguments fall in sections EPA answered only with "out of scope"'],
+].map(([c,n,l]) => `<div class="tile ${c}"><div class="n">${n}</div><div class="l">${l}</div></div>`).join('');
+$('#layers').innerHTML = `<thead><tr><th>Layer</th><th class="num">Oppose</th><th class="num">Support</th><th class="num">Share opposed</th><th>Basis</th></tr></thead><tbody>` +
+  S.layers.map(l => `<tr><td>${esc(l.layer)}</td><td class="num">${fmt(l.o)}</td><td class="num">${fmt(l.s)}</td><td class="num">${pct(l.o,l.o+l.s)}</td><td class="who">${l.n?fmt(l.n)+' '+(l.unit==='signatures'?'campaigns':'entries')+'; ':''}share among ${l.unit} with a determinable stance</td></tr>`).join('') + '</tbody>';
+const eb = S.by_entity.slice().sort((a,b)=>(b.oppose_rescission+b.support_rescission)-(a.oppose_rescission+a.support_rescission));
+const emax = Math.max(...eb.map(r=>r.oppose_rescission+r.support_rescission+r.mixed+r.unclear+r.off_topic));
+$('#entitybars').innerHTML = eb.map(r => { const t=r.oppose_rescission+r.support_rescission+r.mixed+r.unclear+r.off_topic, w=100*t/emax;
+  return `<div>${esc(ENT[r.entity]||r.entity)}</div><div class="bar" title="${fmt(r.oppose_rescission)} oppose / ${fmt(r.support_rescission)} support"><i class="o" style="width:${(100*r.oppose_rescission/t).toFixed(1)}%"></i><i class="s" style="width:${(100*r.support_rescission/t).toFixed(1)}%"></i><i class="u" style="width:${(100*(t-r.oppose_rescission-r.support_rescission)/t).toFixed(1)}%"></i></div><div class="mono">${fmt(r.oppose_rescission)} : ${fmt(r.support_rescission)}</div>`; }).join('');
+$('#oos-lede').textContent = `${S.oos_any_sections} of the ${S.rtc_leaf_sections} sections of EPA's Response to Comments dismiss comments as out of scope in whole or in part. ${S.oos_whole_sections} sections consist of the dismissal only; they absorb ${fmt(S.oos_whole_args)} of ${fmt(S.raw_arguments)} substantive arguments (${pct(S.oos_whole_args,S.raw_arguments)}) from ${fmt(S.oos_whole_commenters)} commenters.`;
+$('#oos').innerHTML = `<thead><tr><th>RTC §</th><th>Section</th><th class="num">Arguments</th><th class="num">Commenters</th><th>Dismissal</th></tr></thead><tbody>` +
+  D.oos.map(r => `<tr><td><span class="rtcnum">${esc(r.sec)}</span></td><td>${esc(r.title)}</td><td class="num">${fmt(r.raw_args)}</td><td class="num">${fmt(r.commenters)}</td><td>${r.dismissal.startsWith('WHOLE')?'<b>WHOLE</b>':'part'}</td></tr>`).join('') + '</tbody>';
+
+// ---- generic paged table
+function paged(rows, tbody, pager, count, render, page=200){
+  let p = 0; const n = Math.max(1, Math.ceil(rows.length/page));
+  const draw = () => { tbody.innerHTML = rows.slice(p*page,(p+1)*page).map(render).join(''); count.textContent = fmt(rows.length)+' rows';
+    pager.innerHTML = n>1 ? `<button ${p==0?'disabled':''} data-d="-1">Previous</button><span>page ${p+1} of ${n}</span><button ${p>=n-1?'disabled':''} data-d="1">Next</button>` : ''; };
+  pager.onclick = e => { const b = e.target.closest('button'); if(!b) return; p += +b.dataset.d; draw(); window.scrollTo({top: tbody.closest('section').offsetTop, behavior:'smooth'}); };
+  draw();
+}
+// ---- comments
+$('#nc').textContent = fmt(S.unique_total);
+$('#namenote').innerHTML = `<b>Submitter names.</b> Published for the ${fmt(S.names_published)} entries filed in a public capacity — organizations, governments, elected officials, trade associations and other entities that filed a substantive comment. The other ${fmt(S.names_withheld)} are shown as "Individual commenter"; their names are on regulations.gov, one click away through the docket id, but are not reproduced or made searchable here.`;
+// deadline state: the page must not still say "comments due" after the date has passed
+(function(){ const d = new Date(S.sprm_deadline + 'T23:59:59-05:00'), open = Date.now() <= d.getTime();
+  const f = d.toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric', timeZone:'UTC'});
+  $('#deadline-note').innerHTML = open
+    ? `Comments on the September 2026 power-plant proposal are open until <b>${f}</b> — <a href="https://www.regulations.gov/docket/EPA-HQ-OAR-2025-0124" target="_blank" rel="noopener">docket EPA-HQ-OAR-2025-0124</a>.`
+    : `The comment period on the September 2026 power-plant proposal closed on ${f}.`;
+})();
+const ents = [...new Set(D.comments.map(c=>c.e))].filter(Boolean).sort();
+$('#centity').innerHTML += ents.map(e=>`<option value="${e}">${esc(ENT[e]||e)}</option>`).join('');
+function drawComments(){
+  const q = $('#csearch').value.trim().toLowerCase(), st = $('#cstance').value, en = $('#centity').value, sub = $('#csub').value;
+  const rows = D.comments.filter(c => (!st||c.s===st) && (!en||c.e===en) && (!sub||c.sub==1) && (!q || (c.t+' '+c.st+' '+c.k).toLowerCase().includes(q)));
+  paged(rows, $('#ctable tbody'), $('#cpager'), $('#ccount'), c => `<tr><td><a class="mono" href="${regs(c.id)}" target="_blank" rel="noopener">${esc(c.id)}</a></td><td class="mono">${esc(c.d)}</td><td>${c.an?`<span class="who">${esc(c.t)}</span>`:esc(c.t)}${c.sub?' <span class="who">·&nbsp;substantive</span>':''}${c.rl?` <span class="who" title="${esc(c.rl)}">·&nbsp;multi-author letter, listed by EPA as a campaign</span>`:''}</td><td class="who">${esc(ENT[c.e]||c.e)}</td><td>${pill(c.s)}</td><td class="who">${esc(c.c)}${c.rc?' ·&nbsp;re-checked':''}</td><td class="q">${esc(c.k)}</td></tr>`);
+}
+['#csearch','#cstance','#centity','#csub'].forEach(s => $(s).addEventListener('input', drawComments));
+// ---- campaigns
+const camps = D.campaigns.slice().sort((a,b)=>b.w-a.w);
+const co = camps.filter(c=>c.s==='OPPOSE'), cs = camps.filter(c=>c.s==='SUPPORT');
+$('#camptiles').innerHTML = [['o', fmt(co.reduce((a,c)=>a+c.w,0)), `signatures on ${co.length} campaigns opposing rescission`], ['s', fmt(cs.reduce((a,c)=>a+c.w,0)), `signatures on ${cs.length} campaigns supporting rescission`]].map(([c,n,l])=>`<div class="tile ${c}"><div class="n">${n}</div><div class="l">${l}</div></div>`).join('');
+$('#camptable tbody').innerHTML = camps.map(c => `<tr><td><a class="mono" href="${regs(c.id)}" target="_blank" rel="noopener">${esc(c.id)}</a></td><td>${esc(c.t)}</td><td class="num">${fmt(c.w)}</td><td>${pill(c.s)}</td><td class="q">${esc(c.ev)}</td><td class="who">${esc(c.note||'')}</td></tr>`).join('');
+$('#campnote').textContent = `Appendix A also lists ${fmt(S.campaign_moved + S.campaign_relabeled)} entries that are single letters with several signatories rather than campaigns. ${fmt(S.campaign_moved)} of them — multi-author comments from named scientists, economists, commissioners and a university group — are counted with the individually submitted comments instead and marked "reclassified" below; the others are sign-on letters and compiled letters, labelled in the Note column.`;
+// ---- arguments
+$('#nraw').textContent = fmt(S.raw_arguments); $('#nsub').textContent = fmt(S.substantive_docs); $('#ncanon').textContent = fmt(S.canonical);
+const topics = [...new Map(D.arguments.map(a=>[a.tc, a.tl])).entries()].sort((x,y)=>x[0].localeCompare(y[0], undefined, {numeric:true}));
+$('#atopic').innerHTML += topics.map(([c,l])=>`<option value="${esc(c)}">${esc(c)} ${esc(l)}</option>`).join('');
+const argRow = a => `<tr><td><span class="rtcnum" title="${esc(a.tl)}">${esc(a.tc)}</span></td><td>${esc(a.cl)}<details><summary>quote · commenters</summary><div class="q">“${esc(a.q)}” — <a class="mono" href="${regs(a.doc)}" target="_blank" rel="noopener">${esc(a.doc)}</a></div><div class="who">${esc(a.who.join('; '))}${a.nc>a.who.length?' …':''}</div>${['vehicle_rtc','vehicle_fr','sprm_fr','partial_repeal'].map(k=>a.vq[k]?`<div class="who"><b>${DOCN[k]}</b> (${esc(VERD[a.v[k]])}${a.v[k]==='not_addressed'?'; nearest passage':''}): ${esc(a.vq[k])} ${cite(a,k)}</div>`:'').join('')}${a.ho?'<div class="who">hand-corrected after source check</div>':''}</details></td><td class="num" title="model-assigned commenters / with similarity fill">${fmt(a.ncm)}<span class="who">/${fmt(a.nc)}</span></td><td class="who">${esc(a.ap.replace('_',' '))}</td><td>${vbox(a.v.vehicle_rtc,a.vq.vehicle_rtc)}</td><td>${vbox(a.v.vehicle_fr,a.vq.vehicle_fr)}</td><td>${a.ap==='vehicle_only'?NA:vbox(a.v.sprm_fr,a.vq.sprm_fr)}</td><td>${a.ap==='vehicle_only'?NA:vbox(a.v.partial_repeal,a.vq.partial_repeal)}</td></tr>`;
+function drawArgs(){
+  const q=$('#asearch').value.trim().toLowerCase(), tc=$('#atopic').value, pos=$('#apos').value, ap=$('#aap').value, rtc=$('#artc').value, sort=$('#asort').value;
+  let rows = D.arguments.filter(a => (!tc||a.tc===tc)&&(!pos||a.pos===pos)&&(!ap||a.ap===ap)&&(!rtc||a.v.vehicle_rtc===rtc)&&(!q||(a.cl+' '+a.tl+' '+a.who.join(' ')).toLowerCase().includes(q)));
+  rows = rows.slice().sort(sort==='tc' ? (x,y)=>x.tc.localeCompare(y.tc,undefined,{numeric:true})||y.ncm-x.ncm : (x,y)=>y.ncm-x.ncm||y.nc-x.nc);
+  paged(rows, $('#atable tbody'), $('#apager'), $('#acount'), argRow, 100);
+}
+['#asearch','#atopic','#apos','#aap','#artc','#asort'].forEach(s => $(s).addEventListener('input', drawArgs));
+// ---- shortlist
+const sl = D.arguments.filter(a=>a.sl).sort((x,y)=>y.ncm-x.ncm||y.nc-x.nc);
+$('#sltiles').innerHTML = [['o', fmt(sl.length), 'canonical arguments answered in none of the three documents'], ['o', fmt(sl.filter(a=>a.ncm>=2).length), 'of them raised by two or more substantive commenters'], ['a', fmt(new Set(sl.map(a=>a.tc)).size), 'RTC topics they span']].map(([c,n,l])=>`<div class="tile ${c}"><div class="n">${n}</div><div class="l">${l}</div></div>`).join('');
+function drawSL(){ const m=+$('#slmin').value; const rows = sl.filter(a=>a.ncm>=m); $('#slcount').textContent = fmt(rows.length)+' rows';
+  $('#sltable tbody').innerHTML = rows.map(a => `<tr><td><span class="rtcnum" title="${esc(a.tl)}">${esc(a.tc)}</span></td><td>${esc(a.cl)}<details><summary>quote · commenters</summary><div class="q">“${esc(a.q)}” — <a class="mono" href="${regs(a.doc)}" target="_blank" rel="noopener">${esc(a.doc)}</a></div><div class="who">${esc(a.who.join('; '))}</div></details></td><td class="num">${fmt(a.ncm)}</td><td>${vbox(a.v.vehicle_rtc,a.vq.vehicle_rtc)}<span class="who">${esc(VERD[a.v.vehicle_rtc])}</span></td><td>${vbox(a.v.vehicle_fr,a.vq.vehicle_fr)}<span class="who">${esc(VERD[a.v.vehicle_fr])}</span></td><td>${vbox(a.v.sprm_fr,a.vq.sprm_fr)}<span class="who">${esc(VERD[a.v.sprm_fr])}</span></td></tr>`).join(''); }
+$('#slmin').addEventListener('input', drawSL);
+// ---- themes
+function drawThemes(){
+  const pos = $('#thpos').value, m = +$('#thmin').value;
+  $('#themes').innerHTML = D.themes.map(t => {
+    const secs = new Set(t.sections.map(x=>x.num));
+    const rows = D.arguments.filter(a => secs.has(a.tc) && (!pos||a.pos===pos) && a.ncm>=m).sort((x,y)=>y.ncm-x.ncm||y.nc-x.nc);
+    const nAll = D.arguments.filter(a => secs.has(a.tc)).length;
+    return `<h3>${esc(t.name)}</h3>
+    <div class="who" style="margin-bottom:8px">${fmt(nAll)} canonical arguments across ${t.sections.length} RTC sections · showing ${fmt(rows.length)}</div>
+    <details><summary>EPA's response, by RTC section (${t.sections.filter(x=>x.response).length})</summary>${t.sections.map(x=>x.response?`<div style="margin:8px 0"><span class="rtcnum">${esc(x.num)}</span> <b>${esc(x.title)}</b> <span class="mono">PDF p. ${esc(x.page)}</span><div class="q">${esc(x.response)}</div></div>`:`<div style="margin:8px 0"><span class="rtcnum">${esc(x.num)}</span> <b>${esc(x.title)}</b> <span class="who">— heading only; responses are in its subsections</span></div>`).join('')}</details>
+    <div class="tbl"><table><thead><tr><th>RTC §</th><th>Commenters' argument</th><th class="num">Commenters</th><th>RTC</th><th>EPA's reply (vehicle RTC), with location</th><th>SP</th><th>Supplemental proposal, with FR page</th></tr></thead><tbody>
+    ${rows.map(a => `<tr><td><span class="rtcnum" title="${esc(a.tl)}">${esc(a.tc)}</span></td><td>${esc(a.cl)}<details><summary>quote · commenters</summary><div class="q">“${esc(a.q)}” — <a class="mono" href="${regs(a.doc)}" target="_blank" rel="noopener">${esc(a.doc)}</a></div><div class="who">${esc(a.who.join('; '))}${a.nc>a.who.length?' …':''}</div>${a.vq.vehicle_fr?`<div class="who"><b>Vehicle final rule</b> (${esc(VERD[a.v.vehicle_fr])}): ${esc(a.vq.vehicle_fr)}</div>`:''}</details></td><td class="num">${fmt(a.ncm)}</td><td>${vbox(a.v.vehicle_rtc)}</td><td class="q">${reply(a,'vehicle_rtc')}</td><td>${a.ap==='vehicle_only'?'':vbox(a.v.sprm_fr)}</td><td class="q">${a.ap==='vehicle_only'?'<span class="who">n/a — vehicle-only argument</span>':reply(a,'sprm_fr')}</td></tr>`).join('')}
+    </tbody></table></div>`; }).join('');
+}
+['#thpos','#thmin'].forEach(s => $(s).addEventListener('input', drawThemes));
+// ---- sprm
+const sv = S.sprm_verdicts;
+$('#sprmtiles').innerHTML = [['a', fmt(S.sprm_total), 'endangerment-related arguments EPA makes in the proposal'], ['s', fmt(sv.same_argument_in_vehicle||0), 'already made in the vehicle rescission'], ['g', fmt(sv.extended_or_reframed||0), 'extended or reframed for section 111'], ['o', fmt(sv.new_in_sprm||0), 'genuinely new']].map(([c,n,l])=>`<div class="tile ${c}"><div class="n">${n}</div><div class="l">${l}</div></div>`).join('');
+$('#sprmnote').textContent = `The ${fmt(sv.new_in_sprm||0)} rows marked new all state one argument — that EPA created a combined "fossil fuel-fired EGU" source category in 2015 without a new listing under section 111(b)(1)(A) — in different places in the preamble. Everything else in the proposal's endangerment reasoning was already in the vehicle rescission, restated for section 111.`;
+$('#sprmt').innerHTML += [...new Set(D.sprm.map(r=>r.ty))].sort().map(t=>`<option value="${t}">${esc(t.replace(/_/g,' '))}</option>`).join('');
+const nrank = {new_in_sprm:0, extended_or_reframed:1, same_argument_in_vehicle:2};
+function drawSprm(){ const v=$('#sprmv').value, t=$('#sprmt').value; const rows = D.sprm.filter(r=>(!v||r.v===v)&&(!t||r.ty===t)).sort((x,y)=>nrank[x.v]-nrank[y.v]);
+  $('#sprmcount').textContent = fmt(rows.length)+' rows';
+  $('#sprmtable tbody').innerHTML = rows.map(r => `<tr><td><span class="v ${esc(r.v)}"></span><span class="who">${esc(NOV[r.v])}</span></td><td class="who">${esc(r.sec)}</td><td class="who">${esc(r.ty.replace(/_/g,' '))}</td><td>${esc(r.cl)}<details><summary>quote</summary><div class="q">“${esc(r.q)}”</div>${r.vq?`<div class="who">closest vehicle passage (${esc(r.vd)}): ${esc(r.vq)}</div>`:''}</details></td><td class="who">${esc(r.new)}</td></tr>`).join(''); }
+['#sprmv','#sprmt'].forEach(s => $(s).addEventListener('input', drawSprm));
+// ---- methods
+$('#methods').innerHTML = `
+<h3>Data</h3><p>All ${fmt(D.comments.length + D.campaigns.length)} posted entries on regulations.gov docket ${S.docket} (pulled via the v4 API, 2026-09-15/16), with attachments. EPA's Response to Comments (docket document 31089, 334 pp.) supplies both the campaign signature counts (its Appendix A) and the topic outline used to index arguments. Four EPA documents were checked for coverage: that RTC, the vehicle final rule (91 FR 2026-03157), the power-plant supplemental proposed rule (91 FR 2026-19072) and the power-plant final partial repeal (91 FR 2026-19071).</p>
+<h3>Campaign layer</h3><p>${fmt((S.campaign_counts.OPPOSE||0)+(S.campaign_counts.SUPPORT||0)+(S.campaign_counts.UNCLEAR||0)+(S.campaign_counts.EXCLUDE||0)+(S.campaign_counts.PENDING||0))} campaign entries read by hand; stance recorded with the decisive sentence for each. Weight = EPA's Appendix A signature count where listed (regulations.gov's duplicate count is 1 for a block of 54 campaigns that Appendix A shows are up to 22,263 signatures), else the duplicate count. Every Appendix A row with 110 or fewer signatures was read: ${fmt(S.campaign_moved)} are single multi-author letters with a named author list (logged by EPA as "Mass Comment Campaign … organization unknown (Name et al)") and are treated as individually submitted, substantive comments — classified, argument-extracted and checked against EPA's documents like the rest; ${fmt(S.campaign_relabeled)} are sign-on or compiled letters and stay in the campaign layer with a note.</p>
+<h3>Individual comments (Pass A)</h3><p>Each of ${fmt(S.unique_total)} entries (including the ${fmt(S.campaign_moved)} reclassified letters) classified by ${esc(S.model_bulk)} from its text (inline or extracted attachment, first 6,000 characters) into a stance and commenter type with a verbatim key phrase. Every row not classified with high confidence, or classified mixed/unclear, was re-classified by Opus 5, which prevails. Controls: the ${fmt((S.campaign_counts.OPPOSE||0)+(S.campaign_counts.SUPPORT||0))} hand-classified campaigns run blind through the same prompt agreed 180/180 (Opus) and 179/180 (Sonnet). Audit: a stratified sample of ${S.audit.n} comments was labelled blind by a separate Claude reading of each text before the classifier's label was revealed (a consistency check by the same model family, not a human audit) — ${S.audit.agree}/${S.audit.n} exact agreement, ${S.audit.flips} oppose/support reversals, precision on both determinable classes 100% (95% lower bound ${Math.round(S.audit.prec_lo*100)}%); all disagreements were between a determinable label and unclear/mixed/off-topic.</p>
+<h3>Arguments (Pass B)</h3><p>Substantive comments = every organization, government, Member of Congress and petition entry plus individuals with ≥5 pages: ${fmt(S.substantive_docs)} documents. Opus 5 extracted each distinct argument with a verbatim quote and page, tagged it to the RTC outline section it belongs to and to whether its logic transfers to the power-plant rescission (both / vehicle only / power plants only). Multi-part filings: the main letter in full (≤200 pp.); appended journal articles by abstract; other exhibits by their first five pages.</p>
+<h3>Coverage (Pass C)</h3><p>The ${fmt(S.raw_arguments)} arguments were merged within each RTC topic into ${fmt(S.canonical)} canonical arguments (recursive merge rounds; later rounds chunked by TF-IDF clustering; a topic is final when a round merges less than 10%). For each canonical argument, Opus 5 read the matching RTC section plus the top BM25-retrieved passages from each of the four documents and returned a verdict per document with the decisive sentence (for a "not addressed" verdict the sentence is the nearest passage, and is labelled as such). Arguments tagged vehicle-only were not retrieved against the two power-plant documents and carry no verdict there. Commenter counts are conservative (model-assigned membership; a similarity fill for the ~36% of raw ids dropped in merging is shown after the slash). Every "unaddressed" row with ≥5 commenters was checked by keyword search of the three documents outside the model pipeline; one verdict was corrected as a result. Every quoted EPA sentence is located in its source (RTC section and PDF page; Federal Register page), and RTC replies are taken from EPA's "EPA Response" text rather than its summaries of the comments; the ${S.rtc_summary_quotes_left} rows where only summary text matched are flagged on the page.</p>
+<h3>Power-plant supplemental proposal (Pass D)</h3><p>${fmt(S.sprm_total)} endangerment-related arguments extracted from the supplemental proposal's preamble, each checked against the vehicle rule and RTC with the same retrieval, for whether EPA had already advanced it.</p>
+<h3>Limits</h3><ul><li>Classifications are model-generated; the audit measures the individual-comment layer only and is itself a model reading, not a human one.</li><li>"Not addressed in the supplemental proposal" refers to the proposal's text; EPA's response to comments on it is still to come.</li><li>Canonical argument counts undercount commenters; §3.1 (climate science) remains coarse at 630 canonical arguments.</li><li>103 copyright-restricted attachments (e.g., the NASEM 2025 report) were available only as titles and abstracts.</li></ul>
+<h3>Submitter names</h3><p>A submitter's name is published only where the comment was filed in a public capacity: a substantive entry — organization, government, Member of Congress or petition subtype, or a filing of five pages or more — whose commenter type is not "individual". That is ${fmt(S.names_published)} of ${fmt(S.unique_total)} entries. The remaining ${fmt(S.names_withheld)} appear as "Individual commenter". Every name on this docket is already public on regulations.gov and each row links to its entry there; what this page declines to do is reproduce ${fmt(S.names_withheld)} private citizens' names in a single searchable table. Commenter names on the arguments tab follow the same rule.</p>
+<h3>Corrections</h3><p>Every stance, commenter type and coverage verdict on this page was assigned by a language model and may be wrong in any individual row. If your comment is classified incorrectly, or you want your organization's name removed, open an issue on the repository below or write to the address there; corrections are made and the page rebuilt.</p>
+<h3>Code and data</h3><p>Pipeline, prompts, batch ids and the per-comment and per-argument outputs: <a href="${esc(S.repo)}" target="_blank" rel="noopener">${esc(S.repo.replace('https://',''))}</a>. Code MIT; classifications CC&nbsp;BY&nbsp;4.0; the comments themselves are U.S. federal public records. Model use: ${esc(S.models)}. Downloads: ${DL.map(d=>`<a href="data/${d[0]}" download>${d[1]}</a>`).join(' · ')}.</p>`;
+// ---- tabs
+const tabs = [...document.querySelectorAll('nav.tabs button')];
+function show(p){ tabs.forEach(b=>b.setAttribute('aria-selected', b.dataset.page===p)); document.querySelectorAll('section.page').forEach(s=>s.hidden = s.id!=='page-'+p);
+  try{ localStorage.setItem('ede-tab', p); }catch(e){} if(location.hash!=='#'+p) history.replaceState(null,'','#'+p); }
+tabs.forEach(b => b.addEventListener('click', () => show(b.dataset.page)));
+drawComments(); drawArgs(); drawSL(); drawSprm(); drawThemes();
+let start = (location.hash||'').slice(1); if(!start){ try{ start = localStorage.getItem('ede-tab')||''; }catch(e){} }
+show(tabs.some(b=>b.dataset.page===start) ? start : 'overview');
+})();
+</script>
