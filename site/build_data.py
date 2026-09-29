@@ -96,6 +96,25 @@ def rtc_page(num):
     return "\n".join(RTC_LINES[:x["line_start"]]).count("\f") + 1 if x else None
 themes = [{"key": t["key"], "name": t["name"], "sections": [{"num": n, "title": S_RTC[n]["title"] if n in S_RTC else n, "response": resp_head(n), "page": rtc_page(n)} for n in t["sections"] if n in S_RTC]} for t in THEMES]
 
+# ---- hand audit (Marcus). Reported only once audit_blind.csv carries labels; an unlabelled worksheet
+# yields None and the page says nothing, rather than advertising an audit that has not happened.
+def _hand_audit():
+    import csv as _csv
+    b, k = HERE / "audit_blind.csv", HERE / "audit_key.csv"
+    if not (b.exists() and k.exists()): return None
+    key = {r["docket_id"]: r for r in _csv.DictReader(k.open())}
+    rows = [r for r in _csv.DictReader(b.open()) if (r.get("hand_stance") or "").strip()]
+    if not rows: return None
+    DET = {"oppose_rescission", "support_rescission"}
+    agree = sum(1 for r in rows if r["hand_stance"].strip() == key[r["docket_id"]]["model_stance"])
+    flips = sum(1 for r in rows if r["hand_stance"].strip() in DET
+                and key[r["docket_id"]]["model_stance"] in DET
+                and r["hand_stance"].strip() != key[r["docket_id"]]["model_stance"])
+    det = [r for r in rows if key[r["docket_id"]]["model_stance"] in DET]
+    det_ok = sum(1 for r in det if r["hand_stance"].strip() == key[r["docket_id"]]["model_stance"])
+    return {"n": len(rows), "agree": agree, "flips": flips,
+            "det_n": len(det), "det_agree": det_ok, "labelled_of": sum(1 for _ in _csv.DictReader(b.open()))}
+
 # ---- RTC out-of-scope table
 oos = pd.read_csv(CD / "rtc_out_of_scope_sections.csv").to_dict("records")
 for r in oos: r["title"] = S_RTC[str(r["sec"])]["title"] if str(r["sec"]) in S_RTC else r["title"]  # the csv truncates titles at 55 chars
@@ -122,6 +141,7 @@ summary = {
   "names_published": int(sum(1 for c in comments if not c["an"])), "names_withheld": int(sum(c["an"] for c in comments)),
   "sprm_total": len(sprm), "sprm_verdicts": pd.Series([r["v"] for r in sprm]).value_counts().to_dict(),
   "audit": {"n": 150, "agree": 140, "flips": 0, "prec_lo": 0.94},
+  "hand_audit": _hand_audit(),
   "models": "Sonnet 5 (bulk stance) + Opus 5 (re-check, extraction, canonicalization, coverage, novelty); Batch API", "model_bulk": "Sonnet 5",
   "built": pd.Timestamp.now().strftime("%Y-%m-%d"), "sprm_deadline": "2026-11-02",
   "repo": "https://github.com/msarofim/endangerment-docket-explorer",
