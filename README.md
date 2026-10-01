@@ -19,8 +19,20 @@ rule it builds on says the same thing four times over:
 > "The EPA received comments from a variety of stakeholders supporting and criticizing the legal
 > rationale set out in the proposed rule." — 91 FR 7721, repeated verbatim at 7726
 
-And the Response to Comments notes "an extensive public hearing with testimony from a variety of
-perspectives" (§1.3.2).
+And the Response to Comments says the same of the hearing — "the comment period included an extensive
+public hearing with testimony from a variety of perspectives" (§1.3.2).
+
+The hearing is the one part of this record someone independently counted. EPA heard "oral testimony from
+more than 600 speakers" across four days, 19–22 August 2025 (91 FR 7693; the RTC adds "over more than 30
+hours"). *Eos* sat through all four days and tallied them:
+
+> "By our count, at the end of the four full days of public hearing testimony, we'd heard hundreds of
+> Americans speak out against the EPA proposal and fewer than 20 speak in favor."
+>
+> — Grace van Deelen, [*Eos*, 25 August 2025](https://eos.org/research-and-developments/public-speaks-out-against-epa-plan-to-rescind-endangerment-finding)
+
+Fewer than 20 of more than 600 is under 3%. This explorer covers the written comments, a separate layer
+of the same record; the two layers agree.
 
 EPA counted the comments — "approximately 572,000 written comments from more than 31,000 unique entities
 and 169 mass letter writing campaigns" (91 FR 7693) — without ever discussing the relative number of

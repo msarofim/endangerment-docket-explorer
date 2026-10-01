@@ -149,7 +149,13 @@ co, cs = int(camp_live[camp_live.stance == "OPPOSE"].weight.sum()), int(camp_liv
 uo, us = int((cdf.s == "oppose_rescission").sum()), int((cdf.s == "support_rescission").sum())
 summary = {
   "docket": D, "epa_total": 572000, "epa_unique": 31000, "epa_campaigns": 169, "epa_campaign_comments": 534000,
-  "hearing_speakers": "more than 600", "hearing_eos": "hundreds against, fewer than 20 in favor (Eos staff count)",
+  # the speaker count is EPA's OWN (91 FR 7693; RTC p.2 adds "over more than 30 hours"); the direction
+  # is the one independent tally of the hearing anyone published
+  "hearing": {"speakers": "more than 600", "days": 4, "dates": "August 19-22, 2025",
+              "epa_cite": "91 FR 7693",
+              "tally": "hundreds of Americans speak out against the EPA proposal and fewer than 20 speak in favor",
+              "tally_by": "Grace van Deelen, Eos (25 August 2025)",
+              "tally_url": "https://eos.org/research-and-developments/public-speaks-out-against-epa-plan-to-rescind-endangerment-finding"},
   "layers": [{"layer": "Mass comment campaigns (by signature, EPA Appendix A counts)", "o": co, "s": cs, "n": int(len(camp_live)), "unit": "signatures"},
              {"layer": "Individually submitted comments", "o": uo, "s": us, "n": int(len(cdf)), "unit": "comments"},
              {"layer": "All comments", "o": co + uo, "s": cs + us, "n": None, "unit": "comments"}],
