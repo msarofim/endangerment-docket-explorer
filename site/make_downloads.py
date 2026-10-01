@@ -88,23 +88,25 @@ def main():
         pool = sorted([c for c in D["comments"] if c["s"] == st], key=lambda c: c["id"])
         rows += rng.sample(pool, min(n, len(pool)))
     rng.shuffle(rows)
-    blind, key = HERE / "audit_blind.csv", HERE / "audit_key.csv"
-    with blind.open("w", newline="") as f:
+    cand = sorted(HERE.glob("audit_blind*.csv"), key=lambda q: (q.name == "audit_blind.csv", q.name))
+    blind, key = (next((c for c in cand if any((r.get("hand_stance") or "").strip()
+                        for r in csv.DictReader(c.open()))), HERE / "audit_blind.csv"), HERE / "audit_key.csv")
+    if not any((r.get("hand_stance") or "").strip() for r in csv.DictReader(blind.open())) if blind.exists() else True:
+      with (HERE / "audit_blind.csv").open("w", newline="") as f:
         w = csv.writer(f); w.writerow(["docket_id", "url", "hand_stance", "hand_note"])
         w.writerows([[f"{DOCKET}-{c['id']}", REGS + c["id"], "", ""] for c in rows])
     with key.open("w", newline="") as f:
         w = csv.writer(f); w.writerow(["docket_id", "model_stance", "model_confidence", "commenter_type"])
         w.writerows([[f"{DOCKET}-{c['id']}", c["s"], c["c"], c["e"]] for c in rows])
     print(f"  audit_blind.csv              {len(rows):>7,} rows  (worksheet; seed {AUDIT_SEED}, strata {strata})")
-    done = [r for r in csv.DictReader(blind.open())] if blind.exists() else []
-    labelled = [r for r in done if (r.get("hand_stance") or "").strip()]
-    if labelled:
-        k = {r["docket_id"]: r for r in csv.DictReader(key.open())}
+    ha = S.get("hand_audit")
+    if ha and ha.get("rows"):
+        # emitted from the bundle's own normalised rows -- the label mapping lives in build_data.py and
+        # must not be re-implemented here, or the published "agree" column can disagree with the page
         write("audit_sample.csv", ["docket_id", "url", "commenter_type", "hand_stance", "hand_note",
                                    "model_stance", "model_confidence", "agree"],
-              [[r["docket_id"], r["url"], k[r["docket_id"]]["commenter_type"], r["hand_stance"], r.get("hand_note", ""),
-                k[r["docket_id"]]["model_stance"], k[r["docket_id"]]["model_confidence"],
-                int(r["hand_stance"].strip() == k[r["docket_id"]]["model_stance"])] for r in labelled])
+              [[r["docket_id"], REGS + r["docket_id"].split("-")[-1], r["type"], r["hand"], r["note"],
+                r["model"], r["conf"], r["agree"]] for r in ha["rows"]])
     else:
         print("  audit_sample.csv             not published — audit_blind.csv has no labels yet")
 

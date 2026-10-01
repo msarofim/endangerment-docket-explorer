@@ -96,24 +96,48 @@ def rtc_page(num):
     return "\n".join(RTC_LINES[:x["line_start"]]).count("\f") + 1 if x else None
 themes = [{"key": t["key"], "name": t["name"], "sections": [{"num": n, "title": S_RTC[n]["title"] if n in S_RTC else n, "response": resp_head(n), "page": rtc_page(n)} for n in t["sections"] if n in S_RTC]} for t in THEMES]
 
-# ---- hand audit (Marcus). Reported only once audit_blind.csv carries labels; an unlabelled worksheet
-# yields None and the page says nothing, rather than advertising an audit that has not happened.
+# ---- hand audit (Marcus). Reported only once a worksheet carries labels; an unlabelled worksheet yields
+# None and the page says nothing, rather than advertising an audit that has not happened. The auditor's
+# own file (audit_blind.*.csv) wins over the blank template, and his shorthand is normalised here rather
+# than being imposed on him while he reads.
+HAND_LABELS = {"support": "support_rescission", "oppose": "oppose_rescission", "mixed": "mixed",
+               "unclear": "unclear", "off topic": "off_topic", "off_topic": "off_topic"}
+DET = ("oppose_rescission", "support_rescission")
+
+def _wilson(k, n, z=1.96):
+    if not n: return (0.0, 1.0)
+    import math
+    pp = k / n; d = 1 + z * z / n; c = (pp + z * z / (2 * n)) / d
+    h = z * math.sqrt(pp * (1 - pp) / n + z * z / (4 * n * n)) / d
+    return (max(0.0, c - h), min(1.0, c + h))
+
 def _hand_audit():
     import csv as _csv
-    b, k = HERE / "audit_blind.csv", HERE / "audit_key.csv"
-    if not (b.exists() and k.exists()): return None
+    cand = sorted(HERE.glob("audit_blind*.csv"), key=lambda q: (q.name == "audit_blind.csv", q.name))
+    k = HERE / "audit_key.csv"
+    if not (cand and k.exists()): return None
     key = {r["docket_id"]: r for r in _csv.DictReader(k.open())}
-    rows = [r for r in _csv.DictReader(b.open()) if (r.get("hand_stance") or "").strip()]
-    if not rows: return None
-    DET = {"oppose_rescission", "support_rescission"}
-    agree = sum(1 for r in rows if r["hand_stance"].strip() == key[r["docket_id"]]["model_stance"])
-    flips = sum(1 for r in rows if r["hand_stance"].strip() in DET
-                and key[r["docket_id"]]["model_stance"] in DET
-                and r["hand_stance"].strip() != key[r["docket_id"]]["model_stance"])
-    det = [r for r in rows if key[r["docket_id"]]["model_stance"] in DET]
-    det_ok = sum(1 for r in det if r["hand_stance"].strip() == key[r["docket_id"]]["model_stance"])
-    return {"n": len(rows), "agree": agree, "flips": flips,
-            "det_n": len(det), "det_agree": det_ok, "labelled_of": sum(1 for _ in _csv.DictReader(b.open()))}
+    for src in cand:
+        rows = [r for r in _csv.DictReader(src.open()) if (r.get("hand_stance") or "").strip()]
+        if not rows: continue
+        pairs = [(HAND_LABELS[r["hand_stance"].strip().lower()], key[r["docket_id"]]["model_stance"]) for r in rows]
+        prec = {}
+        for lab in DET:
+            sub = [(h, m) for h, m in pairs if m == lab]
+            ok = sum(1 for h, m in sub if h == m); lo, _hi = _wilson(ok, len(sub))
+            prec[lab] = {"n": len(sub), "ok": ok, "lo": round(lo, 3)}
+        coll = lambda x: "no_stance" if x in ("unclear", "off_topic") else x
+        per = [{"docket_id": r["docket_id"], "hand": h, "note": (r.get("hand_note") or "").strip(),
+                "model": m, "conf": key[r["docket_id"]]["model_confidence"],
+                "type": key[r["docket_id"]]["commenter_type"], "agree": int(h == m)}
+               for r, (h, m) in zip(rows, pairs)]
+        return {"source": src.name, "rows": per, "n": len(rows), "of": sum(1 for _ in _csv.DictReader((HERE / "audit_blind.csv").open())),
+                "agree": sum(1 for h, m in pairs if h == m),
+                "agree_collapsed": sum(1 for h, m in pairs if coll(h) == coll(m)),
+                "flips": sum(1 for h, m in pairs if h in DET and m in DET and h != m),
+                "both_minority": sum(1 for h, m in pairs if h != m and h not in DET and m not in DET),
+                "prec_oppose": prec["oppose_rescission"], "prec_support": prec["support_rescission"]}
+    return None
 
 # ---- RTC out-of-scope table
 oos = pd.read_csv(CD / "rtc_out_of_scope_sections.csv").to_dict("records")

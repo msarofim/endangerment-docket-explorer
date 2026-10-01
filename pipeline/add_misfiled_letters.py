@@ -18,6 +18,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import classify_unique as A, pass_b as B, pass_c as C
 from retrieval import paragraphs, tok
+from rtc_response_text import response_blocks, response_text
 from rank_bm25 import BM25Okapi
 
 HERE = Path(__file__).resolve().parent; D = "EPA-HQ-OAR-2025-0194"; RUN = "sync-2026-09-21"
@@ -123,7 +124,7 @@ C.CANON_OUT.write_text("".join(json.dumps(c) + "\n" for c in canon))
 
 # ---- 6. verdicts for the new canonicals (4 docs), RTC re-judged on response text only ---------------
 S_ = json.load((HERE / "rtc" / "rtc_sections.json").open()); SEC = {s["num"]: s for s in S_}
-resp_paras = [(s["num"], p) for s in S_ for blk in (s["responses"] if s["responses"] else ([s["text"]] if not s["summaries"] else [])) for p in paragraphs(blk)]
+resp_paras = [(s["num"], p) for s in S_ for blk in response_blocks(s) for p in paragraphs(blk)]
 bm = BM25Okapi([tok(p) for _, p in resp_paras])
 RSYS = """You are checking whether U.S. EPA's Response to Comments (RTC) on its 2025 proposal to rescind the 2009 Greenhouse Gas Endangerment Finding RESPONDED to an argument raised by commenters. You will be given one canonical argument and passages drawn ONLY from the RTC's 'EPA Response' text (never from its summaries of what commenters said). Judge: addressed_directly (engages this specific argument on its merits), addressed_generally (responds to the topic in a way that covers it without engaging its specific point), dismissed_out_of_scope (explicitly declines to respond), not_addressed. Quote the decisive EPA sentence verbatim (<= 30 words) and give the passage index; the quote must be EPA speaking in its own voice, not EPA restating a commenter."""
 RSCHEMA = {"type": "object", "properties": {"verdict": {"type": "string", "enum": ["addressed_directly", "addressed_generally", "dismissed_out_of_scope", "not_addressed"]}, "quote": {"type": "string"}, "passage_index": {"type": ["integer", "null"]}, "note": {"type": "string"}}, "required": ["verdict", "quote", "passage_index", "note"], "additionalProperties": False}
@@ -134,7 +135,7 @@ for c in made:
     row = {**c, **d, "usage_in": msg.usage.input_tokens, "usage_out": msg.usage.output_tokens}
     # RTC: response-only judgement (the general verdict retrieves over summaries too)
     q = c["canonical_claim"] + " " + c["sample_quote"]; sc = bm.get_scores(tok(q)); top = sorted(range(len(sc)), key=lambda j: -sc[j])[:6]
-    sec = SEC.get(c["topic_code"]); sec_resp = " ".join(sec["responses"])[:8000] if sec and sec["responses"] else ""
+    sec = SEC.get(c["topic_code"]); sec_resp = response_text(sec)
     user = (f"CANONICAL ARGUMENT [{c['canon_id']}] (RTC topic {c['topic_code']}; {c['n_commenters']} commenters; position {c['position']})\n{c['canonical_claim']}\nSample quote: \"{c['sample_quote']}\"\n\n"
             + (f"=== EPA RESPONSE text of RTC section {c['topic_code']} (first 8,000 chars) ===\n{sec_resp}\n\n" if sec_resp else "")
             + "=== Top EPA RESPONSE passages retrieved from the whole RTC ===\n" + "\n".join(f"[{j}] (section {resp_paras[j][0]}) {resp_paras[j][1][:1600]}" for j in top))

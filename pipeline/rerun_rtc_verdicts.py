@@ -6,13 +6,14 @@ import json, re, time, anthropic
 from pathlib import Path
 from rank_bm25 import BM25Okapi
 from retrieval import paragraphs, tok
+from rtc_response_text import response_blocks, response_text
 from anthropic.types.message_create_params import MessageCreateParamsNonStreaming
 HERE = Path(__file__).resolve().parent; D = "EPA-HQ-OAR-2025-0194"; MODEL = "claude-opus-5"
 S = json.load((HERE/"rtc"/"rtc_sections.json").open()); SEC = {s["num"]: s for s in S}
 # response-only corpus: every EPA Response block, plus unsplit sections (whole text = EPA's words)
 resp_paras = []
 for s in S:
-    src = s["responses"] if s["responses"] else ([s["text"]] if not s["summaries"] else [])
+    src = response_blocks(s)
     for blk in src:
         for p in paragraphs(blk): resp_paras.append((s["num"], p))
 bm = BM25Okapi([tok(p) for _, p in resp_paras])
@@ -23,7 +24,7 @@ todo = [r for r in rows if "verdicts" in r and (r["verdicts"]["vehicle_rtc"].get
 print(len(todo), "to re-run"); c = anthropic.Anthropic(); tin = tout = 0
 for i, r in enumerate(todo, 1):
     q = r["canonical_claim"] + " " + r["sample_quote"]; sc = bm.get_scores(tok(q)); top = sorted(range(len(sc)), key=lambda j: -sc[j])[:6]
-    sec = SEC.get(r["topic_code"]); sec_resp = " ".join(sec["responses"])[:8000] if sec and sec["responses"] else ""
+    sec = SEC.get(r["topic_code"]); sec_resp = response_text(sec)
     user = (f"CANONICAL ARGUMENT [{r['canon_id']}] (RTC topic {r['topic_code']}; {r['n_commenters']} commenters; position {r['position']})\n{r['canonical_claim']}\nSample quote: \"{r['sample_quote']}\"\n\n"
             + (f"=== EPA RESPONSE text of RTC section {r['topic_code']} (first 8,000 chars) ===\n{sec_resp}\n\n" if sec_resp else "")
             + "=== Top EPA RESPONSE passages retrieved from the whole RTC ===\n" + "\n".join(f"[{j}] (section {resp_paras[j][0]}) {resp_paras[j][1][:1600]}" for j in top))

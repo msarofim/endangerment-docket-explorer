@@ -1,7 +1,8 @@
 # pipeline outputs and inputs: gigabytes, and the comment text is regulations.gov's corpus
 site/data.json
 site/audit_blind.csv
-site/audit_key.csv
+# the completed worksheet and its key ARE published — they are the audit's evidence
+
 cache/
 attachments*/
 *.jsonl
