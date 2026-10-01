@@ -6,9 +6,30 @@ substantive argument checked against what EPA actually said in reply, across fou
 
 **Site:** https://msarofim.github.io/endangerment-docket-explorer/
 
-Built because EPA's September 2026 power-plant proposal describes that docket as "hundreds of thousands
-of comments from a variety of perspectives" (91 FR 59016) without ever quantifying it. The record shows
-**98.1%** of comments with a determinable stance opposed the rescission.
+Built because of how EPA characterised that record. The September 2026 power-plant proposal describes it
+as "hundreds of thousands of comments from a variety of perspectives" (91 FR 59016). The vehicle final
+rule it builds on reported "supportive and adverse comments on virtually all substantive aspects of the
+proposal from a wide variety of stakeholders" (91 FR 7695), and the Response to Comments notes "an
+extensive public hearing with testimony from a variety of perspectives" (§1.3.2).
+
+EPA counted the comments — "approximately 572,000 written comments from more than 31,000 unique entities
+and 169 mass letter writing campaigns" (91 FR 7693) — but never reported which way they ran. The record
+shows **98.1%** of comments with a determinable stance opposed the rescission.
+
+The vehicle rule lists the categories of stakeholder EPA heard from. Every one of them ran heavily
+against the rescission except two:
+
+| | oppose | support | opposed |
+|---|---:|---:|---:|
+| Individual citizens | 25,591 | 2,296 | 91.8% |
+| Environmental / advocacy groups | 638 | 28 | 95.8% |
+| Health professionals and organizations | 532 | 0 | 100% |
+| Academics and scientists | 500 | 20 | 96.2% |
+| State and local governments | 171 | 8 | 95.5% |
+| Elected officials | 112 | 5 | 95.7% |
+| Religious organizations | 74 | 1 | 98.7% |
+| **Business and industry** | 105 | **266** | **28.3%** |
+| **Trade associations** | 17 | **34** | **33.3%** |
 
 ## What is here
 
