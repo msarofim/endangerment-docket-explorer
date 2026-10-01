@@ -14,8 +14,8 @@ of comments from a variety of perspectives" (91 FR 59016) without ever quantifyi
 
 | | |
 |---|---|
-| `site/dist/index.html` | the whole tool — one self-contained file, no server, no build step to view it |
-| `site/dist/data/*.csv` | the published tables, linked from the Methods page |
+| `docs/index.html` | the whole tool — one self-contained file, no server, no build step to view it |
+| `docs/data/*.csv` | the published tables, linked from the Methods page |
 | `site/` | the build: `build_data.py` → `make_downloads.py` → `check_release.py` → `build_site.py` |
 | `pipeline/` | the analysis that produced the data — docket pull, corpus, and the four model passes |
 
