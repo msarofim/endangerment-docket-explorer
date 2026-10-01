@@ -8,13 +8,24 @@ substantive argument checked against what EPA actually said in reply, across fou
 
 Built because of how EPA characterised that record. The September 2026 power-plant proposal describes it
 as "hundreds of thousands of comments from a variety of perspectives" (91 FR 59016). The vehicle final
-rule it builds on reported "supportive and adverse comments on virtually all substantive aspects of the
-proposal from a wide variety of stakeholders" (91 FR 7695), and the Response to Comments notes "an
-extensive public hearing with testimony from a variety of perspectives" (§1.3.2).
+rule it builds on says the same thing four times over:
+
+> "The EPA received supportive and adverse comments on virtually all substantive aspects of the proposal
+> from a wide variety of stakeholders" — 91 FR 7695
+
+> "In reviewing the public response to the proposal, the Administrator appreciated the wide variety of
+> perspectives and significant interest in the issues raised for further consideration." — 91 FR 7701
+
+> "The EPA received comments from a variety of stakeholders supporting and criticizing the legal
+> rationale set out in the proposed rule." — 91 FR 7721, repeated verbatim at 7726
+
+And the Response to Comments notes "an extensive public hearing with testimony from a variety of
+perspectives" (§1.3.2).
 
 EPA counted the comments — "approximately 572,000 written comments from more than 31,000 unique entities
-and 169 mass letter writing campaigns" (91 FR 7693) — but never reported which way they ran. The record
-shows **98.1%** of comments with a determinable stance opposed the rescission.
+and 169 mass letter writing campaigns" (91 FR 7693) — without ever discussing the relative number of
+comments that supported the rule relative to the ones that opposed it. The record shows **98.1%** of
+comments with a determinable stance opposed the rescission.
 
 The vehicle rule lists the categories of stakeholder EPA heard from. Every one of them ran heavily
 against the rescission except two:
