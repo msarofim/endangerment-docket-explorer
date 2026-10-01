@@ -7,4 +7,7 @@ data = (HERE / "data.json").read_text()
 data = data.replace("</", "<\\/")
 html = (HERE / "template.html").read_text().replace("__DATA__", data)
 (HERE / "dist").mkdir(exist_ok=True); out = HERE / "dist" / "index.html"; out.write_text(html)
+# GitHub Pages serves this directory verbatim; the marker must live INSIDE the build output or a
+# `rsync --delete` sync wipes it (2026-10-01)
+(HERE / "dist" / ".nojekyll").touch()
 print(f"{out}: {out.stat().st_size/1e6:.1f} MB")
