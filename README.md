@@ -117,8 +117,15 @@ regenerates them from the docket; a regulations.gov API key and an Anthropic API
 ## Corrections
 
 Every stance, commenter type and coverage verdict was assigned by a language model and may be wrong in
-any individual row. If your comment is classified incorrectly, or you want your organization's name
-removed, open an issue — corrections are made and the page rebuilt.
+any individual row. Two routes, split by purpose:
+
+- **A comment read wrongly** — say so in the comment thread on the post that accompanies the page,
+  linked from the page's own Corrections section. (The page is the single place that URL is written
+  down; `site/check_release.py` refuses to pass a build in which it is unset.)
+- **A name to remove, or an error in the underlying data** — open an issue here, which leaves a record
+  the rebuild can be traced to.
+
+Corrections are made and the page rebuilt.
 
 ## Licence
 

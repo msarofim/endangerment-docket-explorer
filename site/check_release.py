@@ -21,6 +21,12 @@ BUNDLE = HERE / "data.json"
 DATA = HERE / "dist" / "data"
 ANON_LABEL = "Individual commenter"
 
+# The Corrections section's first route is the comment thread on the Substack post that accompanies the
+# page. That URL does not exist until the post is published, so an unset value is the normal state during
+# development and a RELEASE-BLOCKING state at launch -- the page and the post go live together.
+SUBSTACK_RX = re.compile(r"^https://[\w.-]+\.substack\.com/p/[\w-]+", re.I)
+MUTATE_STUB_URL = "https://example.substack.com/p/stub"
+
 ALLOW = re.compile(r"@epa\.gov$|@regulations\.gov$|@gpo\.gov$", re.I)
 PATTERNS = [
     ("email", re.compile(r"\b[\w.+-]+@[\w-]+\.[\w.]{2,}\b")),
@@ -85,6 +91,21 @@ def check_name_policy(D):
     return bad
 
 
+def check_corrections(D):
+    """a page that invites corrections must name a route that works. Findings carry a distinguishable hit
+    value ("(unset)" vs the offending URL) so the mutation test can require the SPECIFIC branch, not merely
+    a finding of this class."""
+    u = (D["summary"].get("substack") or "").strip()
+    if not u:
+        return [("corrections", "$.summary.substack", "(unset)",
+                 "set SUBSTACK_POST_URL in build_data.py to the published post before release; "
+                 "the page and the Substack post launch together")]
+    if not SUBSTACK_RX.match(u):
+        return [("corrections", "$.summary.substack", u,
+                 "not a https://<publication>.substack.com/p/<slug> post URL")]
+    return []
+
+
 def check_downloads(D):
     bad = []
     for d in D["summary"].get("downloads", []):
@@ -100,7 +121,7 @@ def check_downloads(D):
 
 def run(bundle_text=None, csv_dir=None):
     D = json.loads(bundle_text if bundle_text is not None else BUNDLE.read_text())
-    findings = scan_payload(D) + check_name_policy(D) + check_downloads(D)
+    findings = scan_payload(D) + check_name_policy(D) + check_downloads(D) + check_corrections(D)
     for p in sorted((csv_dir or DATA).glob("*.csv")):
         rows = list(csv.reader(p.open()))
         findings += [(lbl, f"{p.name}:{loc}", hit, ctx) for lbl, loc, hit, ctx in scan_payload(rows)]
@@ -120,6 +141,12 @@ def report(findings, label=""):
 def mutate():
     """break what the gate guards and require it to notice — a gate that has never failed is not a gate"""
     base = json.loads(BUNDLE.read_text())
+    # This test measures whether the gate DETECTS each violation -- not whether the current build is
+    # releasable, which is what plain `check_release.py` reports. Before the Substack post exists
+    # $.summary.substack is legitimately empty, and leaving it so here would fail the clean-build step
+    # below for a true but unrelated reason -- which is how a red test starts being read as "expected"
+    # and stops catching regressions. So give the base a well-formed URL and plant the violations on it.
+    base["summary"]["substack"] = base["summary"].get("substack") or MUTATE_STUB_URL
     cases = [
         ("email", "jane.doe@example.com", lambda d, v: d["comments"][0].update(k=d["comments"][0]["k"] + " contact me at " + v)),
         ("phone", "415-555-0134", lambda d, v: d["comments"][1].update(k=d["comments"][1]["k"] + " call " + v)),
@@ -128,6 +155,8 @@ def mutate():
         ("street address", "221 Baker Street", lambda d, v: d["comments"][4].update(k=d["comments"][4]["k"] + " " + v)),
         ("name policy", "A Private Citizen", lambda d, v: d["comments"][2].update(t=v)),   # row has an=1
         ("download", "nope.csv", lambda d, v: d["summary"].update(downloads=[{"file": v, "label": "x", "rows": 1, "bytes": 1}])),
+        ("corrections", "(unset)", lambda d, v: d["summary"].update(substack="")),
+        ("corrections", "https://example.com/not-substack", lambda d, v: d["summary"].update(substack=v)),
     ]
     ok = True
     for name, planted, mutation in cases:
@@ -138,8 +167,9 @@ def mutate():
         caught = any(f[0] == name and any(planted in str(x) or str(x) in planted for x in (f[1], f[2])) for f in found)
         print(f"  mutation {name:<16} {planted:<26} -> {'CAUGHT' if caught else 'MISSED — gate is blind to this'}")
         ok &= caught
-    clean = run()
-    print(f"  clean build           -> {'PASS' if not clean else 'FAIL'}")
+    clean = run(bundle_text=json.dumps(base))
+    print(f"  clean build           -> {'PASS' if not clean else 'FAIL'}"
+          + ("" if base["summary"]["substack"] != MUTATE_STUB_URL else "   (substack URL stubbed: pre-launch)"))
     return 0 if (ok and not clean) else 1
 
 

@@ -22,6 +22,16 @@ PRIVATE_TYPE = "individual"
 def named(entity, substantive): return bool(substantive) and entity != PRIVATE_TYPE
 ANON_LABEL = "Individual commenter"
 
+# ---- CORRECTIONS ROUTING (Marcus 2026-10-01) -------------------------------------------------------
+# Split by purpose. A misclassification report is discussion and belongs in the comment thread on the
+# Substack post that accompanies the page; a name-removal or data correction belongs in a GitHub issue,
+# which leaves a record the rebuild can be traced to.
+# SUBSTACK_POST_URL does not exist until the post is published, and the page and the post launch
+# TOGETHER -- so check_release.py FAILS while it is empty rather than shipping a page whose first
+# correction route points at a thread no reader can reach. Fill it in at launch, rebuild, re-sync.
+REPO_URL          = "https://github.com/msarofim/endangerment-docket-explorer"
+SUBSTACK_POST_URL = ""      # e.g. https://<publication>.substack.com/p/<slug>
+
 # ---- unique comments (Pass A final) + corpus metadata
 fin = {r["id"]: r for r in J(f"stance_unique_final_{D}.jsonl")}
 corpus = J(f"unique_comments_{D}.jsonl")
@@ -174,7 +184,7 @@ summary = {
   "hand_audit": _hand_audit(),
   "models": "Sonnet 5 (bulk stance) + Opus 5 (re-check, extraction, canonicalization, coverage, novelty); Batch API", "model_bulk": "Sonnet 5",
   "built": pd.Timestamp.now().strftime("%Y-%m-%d"), "sprm_deadline": "2026-11-02",
-  "repo": "https://github.com/msarofim/endangerment-docket-explorer",
+  "repo": REPO_URL, "substack": SUBSTACK_POST_URL,
 }
 bundle = {"summary": summary, "comments": comments, "campaigns": campaigns, "arguments": args, "sprm": sprm, "oos": oos, "themes": themes}
 (HERE / "data.json").write_text(json.dumps(bundle, separators=(",", ":")))
