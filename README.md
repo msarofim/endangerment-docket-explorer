@@ -119,11 +119,12 @@ regenerates them from the docket; a regulations.gov API key and an Anthropic API
 Every stance, commenter type and coverage verdict was assigned by a language model and may be wrong in
 any individual row. Two routes, split by purpose:
 
-- **A comment read wrongly** — say so in the comment thread on the post that accompanies the page,
-  linked from the page's own Corrections section. (The page is the single place that URL is written
-  down; `site/check_release.py` refuses to pass a build in which it is unset.)
-- **A name to remove, or an error in the underlying data** — open an issue here, which leaves a record
-  the rebuild can be traced to.
+- **A correction** — a stance or coverage verdict that is wrong, or a name you want taken down —
+  open an issue here. An issue is timestamped and public, so the rebuild can be traced to it in a way
+  a comment thread cannot.
+- **Discussion** — the comment thread on the post that accompanies the page, linked from the page's
+  own Corrections section. (The page is the single place that URL is written down; `site/check_release.py`
+  refuses to pass a build in which it is unset.)
 
 Corrections are made and the page rebuilt.
 
