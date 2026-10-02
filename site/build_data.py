@@ -30,7 +30,7 @@ ANON_LABEL = "Individual commenter"
 # TOGETHER -- so check_release.py FAILS while it is empty rather than shipping a page whose first
 # correction route points at a thread no reader can reach. Fill it in at launch, rebuild, re-sync.
 REPO_URL          = "https://github.com/msarofim/endangerment-docket-explorer"
-SUBSTACK_POST_URL = ""      # e.g. https://<publication>.substack.com/p/<slug>
+SUBSTACK_POST_URL = "https://thesaraphreport.substack.com/p/a-tale-of-two-endangerment-rescissions"
 
 # ---- unique comments (Pass A final) + corpus metadata
 fin = {r["id"]: r for r in J(f"stance_unique_final_{D}.jsonl")}
